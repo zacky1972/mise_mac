@@ -1,0 +1,52 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Elixir CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test-latest:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14-xlarge
+            elixir-version: '1.18.4'
+            otp-version: '28.0.1'
+
+    name: Build and test on ${{ matrix.os }} ${{ matrix.elixir-version }} ${{ matrix.otp-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: jdx/mise-action@v2
+      with:
+        version: '2025.7.2'
+        install: true
+        cache: true
+        experimental: true
+        log_level: debug
+        tool_versions: |
+            erlang: 28.0.1
+            elixir: 1.18.4-otp-28
+    - run: mix test
